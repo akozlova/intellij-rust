@@ -8,6 +8,8 @@ package org.rust.toml.crates.local
 import com.intellij.openapi.components.service
 
 interface CratesLocalIndexService {
+    fun isReady(): Boolean
+
     fun getCrate(crateName: String): CargoRegistryCrate?
     fun getAllCrateNames(): List<String>
 

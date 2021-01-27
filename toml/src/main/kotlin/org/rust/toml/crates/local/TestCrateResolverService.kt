@@ -10,6 +10,8 @@ import org.jetbrains.annotations.TestOnly
 class TestCratesLocalIndexServiceImpl : CratesLocalIndexService {
     var testCrates: Map<String, CargoRegistryCrate> = emptyMap()
 
+    override fun isReady(): Boolean = true
+
     override fun getCrate(crateName: String): CargoRegistryCrate? = testCrates[crateName]
     override fun getAllCrateNames(): List<String> = testCrates.keys.toList()
 }

@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -34,6 +35,7 @@ import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.treewalk.filter.OrTreeFilter
 import org.eclipse.jgit.treewalk.filter.PathFilter
 import org.eclipse.jgit.treewalk.filter.TreeFilter
+import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
 import org.rust.openapiext.RsPathManager
 import org.rust.stdext.cleanDirectory
@@ -104,6 +106,9 @@ class CratesLocalIndexServiceImpl
             }
         })
     }
+
+    @VisibleForTesting
+    override fun isReady(): Boolean = isReady.get()
 
     override fun getState(): CratesLocalIndexState = state
     override fun loadState(state: CratesLocalIndexState) {
@@ -274,6 +279,33 @@ class CratesLocalIndexServiceImpl
         private const val CRATES_INDEX_VERSION: Int = 0
 
         private val LOG: Logger = logger<CratesLocalIndexServiceImpl>()
+
+        private val _TEST_INSTANCE: CratesLocalIndexService by lazy {
+                CratesLocalIndexServiceImpl().apply {
+                    updateCrates()
+                }
+            }
+
+        /**
+         * Simulates the behaviour of real service.
+         * Returns the service object in local [_TEST_INSTANCE], where it is being properly initialized on first access.
+         */
+        @TestOnly
+        fun getTestInstance(): CratesLocalIndexService = _TEST_INSTANCE
+    }
+
+    @TestOnly
+    @Volatile
+    var indexedCommitHash: String = INVALID_COMMIT_HASH
+
+    /**
+     * Simulates the behaviour of real service.
+     * Loads crates local index in current thread and updates local [indexedCommitHash].
+     */
+    @TestOnly
+    fun updateCrates() {
+        updateCrates(registryHeadCommitHash, indexedCommitHash)
+        indexedCommitHash = registryHeadCommitHash
     }
 }
 
